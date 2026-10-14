@@ -1,128 +1,180 @@
 
 #include <iostream>
+#include <limits>
 #include <exception>
 
 #include "Animal.h"
 #include "Fish.h"
 #include "Bird.h"
 #include "Cat.h"
+#include "Keeper.h"
 
 using namespace std;
 
-int main() {
+int readInt(const char* message) {
+    int value;
+
+    while (true) {
+        cout << message;
+
+        if (cin >> value) {
+            cin.ignore(
+                numeric_limits<streamsize>::max(), '\n'
+            );
+            return value;
+        }
+
+        if (cin.eof()) {
+            throw runtime_error("Ввод завершен.");
+        }
+
+        cout << "Ошибка: введите целое число." << endl;
+        cin.clear();
+        cin.ignore(
+            numeric_limits<streamsize>::max(), '\n'
+        );
+    }
+}
+
+void readText(const char* message, char* buffer, int size) {
+    cout << message;
+
+    cin.getline(buffer, size);
+
+    if (cin.fail()) {
+        if (cin.eof()) {
+            throw runtime_error("Ввод завершен.");
+        }
+
+        cin.clear();
+        cin.ignore(
+            numeric_limits<streamsize>::max(), '\n'
+        );
+
+        throw runtime_error(
+            "Слишком длинный текст. Попробуйте снова."
+        );
+    }
+}
+
+void addFish(Keeper& keeper) {
+    char breed[256];
+    char color[256];
+    char foodType[256];
+
+    readText("Порода рыбы: ", breed, 256);
+    readText("Окрас рыбы: ", color, 256);
+    readText("Тип питания: ", foodType, 256);
+
+    keeper.add(new Fish(breed, color, foodType));
+}
+
+void addBird(Keeper& keeper) {
     char breed[256];
     char color[256];
     char food[256];
     char habitat[256];
+
+    readText("Порода птицы: ", breed, 256);
+    readText("Окрас птицы: ", color, 256);
+    readText("Чем питается: ", food, 256);
+    readText("Где обитает: ", habitat, 256);
+
+    keeper.add(new Bird(breed, color, food, habitat));
+}
+
+void addCat(Keeper& keeper) {
+    char breed[256];
+    char color[256];
     char owner[256];
     char name[256];
 
+    readText("Порода кошки: ", breed, 256);
+    readText("Окрас кошки: ", color, 256);
+    readText("ФИО владельца: ", owner, 256);
+    readText("Кличка кошки: ", name, 256);
+
+    keeper.add(new Cat(breed, color, owner, name));
+}
+
+int main() {
     try {
-        cout << "===== СОЗДАНИЕ РЫБЫ =====" << endl;
+        Keeper keeper;
+        int choice;
 
-        cout << "Введите породу рыбы: ";
-        cin.getline(breed, 256);
+        do {
+            cout << "\n========== МЕНЮ ==========" << endl;
+            cout << "1. Добавить рыбу" << endl;
+            cout << "2. Добавить птицу" << endl;
+            cout << "3. Добавить кошку" << endl;
+            cout << "4. Показать всех животных" << endl;
+            cout << "5. Удалить животное" << endl;
+            cout << "6. Показать количество животных" << endl;
+            cout << "0. Выход" << endl;
 
-        cout << "Введите окрас рыбы: ";
-        cin.getline(color, 256);
+            choice = readInt("Ваш выбор: ");
 
-        cout << "Введите тип питания рыбы: ";
-        cin.getline(food, 256);
+            try {
+                switch (choice) {
+                case 1:
+                    addFish(keeper);
+                    break;
 
-        Fish fish(breed, color, food);
+                case 2:
+                    addBird(keeper);
+                    break;
 
-        cout << "\n===== ИНФОРМАЦИЯ О РЫБЕ =====" << endl;
-        cout << fish << endl;
+                case 3:
+                    addCat(keeper);
+                    break;
 
-        cout << "===== СОЗДАНИЕ ПТИЦЫ =====" << endl;
+                case 4:
+                    keeper.showAll();
+                    break;
 
-        cout << "Введите породу птицы: ";
-        cin.getline(breed, 256);
+                case 5:
+                    if (keeper.getCount() == 0) {
+                        cout << "Список животных пуст."
+                             << endl;
+                    }
+                    else {
+                        keeper.showAll();
 
-        cout << "Введите окрас птицы: ";
-        cin.getline(color, 256);
+                        int index = readInt(
+                            "Введите номер животного для удаления: "
+                        );
 
-        cout << "Чем питается птица: ";
-        cin.getline(food, 256);
+                        keeper.remove(index);
+                    }
+                    break;
 
-        cout << "Где обитает птица: ";
-        cin.getline(habitat, 256);
+                case 6:
+                    cout << "Количество животных: "
+                         << keeper.getCount() << endl;
+                    break;
 
-        Bird bird(breed, color, food, habitat);
+                case 0:
+                    cout << "Завершение программы." << endl;
+                    break;
 
-        cout << "\n===== ИНФОРМАЦИЯ О ПТИЦЕ =====" << endl;
-        cout << bird << endl;
+                default:
+                    cout << "Такого пункта меню нет."
+                         << endl;
+                    break;
+                }
+            }
+            catch (const exception& e) {
+                cout << "Ошибка: " << e.what() << endl;
+            }
 
-        cout << "===== СОЗДАНИЕ КОШКИ =====" << endl;
-
-        cout << "Введите породу кошки: ";
-        cin.getline(breed, 256);
-
-        cout << "Введите окрас кошки: ";
-        cin.getline(color, 256);
-
-        cout << "Введите ФИО владельца: ";
-        cin.getline(owner, 256);
-
-        cout << "Введите кличку кошки: ";
-        cin.getline(name, 256);
-
-        Cat cat(breed, color, owner, name);
-
-        cout << "\n===== ИНФОРМАЦИЯ О КОШКЕ =====" << endl;
-        cout << cat << endl;
-
-        cout << "===== ПРОВЕРКА КОНСТРУКТОРОВ КОПИРОВАНИЯ ====="
-             << endl;
-
-        Fish copiedFish(fish);
-        Bird copiedBird(bird);
-        Cat copiedCat(cat);
-
-        cout << "\nКопия рыбы:" << endl;
-        cout << copiedFish << endl;
-
-        cout << "Копия птицы:" << endl;
-        cout << copiedBird << endl;
-
-        cout << "Копия кошки:" << endl;
-        cout << copiedCat << endl;
-
-        cout << "===== ПРОВЕРКА ОПЕРАТОРОВ ПРИСВАИВАНИЯ ====="
-             << endl;
-
-        Fish anotherFish;
-        anotherFish = fish;
-
-        Bird anotherBird;
-        anotherBird = bird;
-
-        Cat anotherCat;
-        anotherCat = cat;
-
-        cout << "\nРезультат присваивания кошки:" << endl;
-        cout << anotherCat << endl;
-
-        cout << "===== ПРОВЕРКА SET И GET =====" << endl;
-
-        fish.setColor("Новый окрас");
-        fish.setFoodType("Растительный");
-
-        cout << "Новый окрас рыбы: "
-             << fish.getColor() << endl;
-
-        cout << "Тип питания рыбы: "
-             << fish.getFoodType() << endl;
-
-        cout << "\n===== ПРОГРАММА ЗАВЕРШЕНА =====" << endl;
-        cout << "При выходе будут вызваны деструкторы." << endl;
+        } while (choice != 0);
     }
     catch (const exception& e) {
-        cerr << "Ошибка: " << e.what() << endl;
-    }
-    catch (...) {
-        cerr << "Неизвестная ошибка." << endl;
+        cerr << "Критическая ошибка: "
+             << e.what() << endl;
+        return 1;
     }
 
+    cout << "Программа завершена." << endl;
     return 0;
 }
